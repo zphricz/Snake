@@ -69,7 +69,6 @@ int main(int argc, char* argv[])
     } else {
         full_screen = false;
     }
-
     Screen scr(screen_width, screen_height, full_screen, "Snake");
     Game g(cells_x, cells_y, &scr);
     g.play();

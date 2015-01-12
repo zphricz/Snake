@@ -14,19 +14,10 @@ Color fruit_color{200, 0, 0};
 Game::Game(int num_x, int num_y, Screen * screen) :
     num_cells_x(num_x),
     num_cells_y(num_y),
-    stage(new int[num_x * num_y]),
-    scr(screen),
-    game_running(true),
-    game_paused(true) {
-        memset(stage, 0, num_x * num_y * sizeof(int));
+    scr(screen) {
 }
 
 Game::~Game() {
-    delete [] stage;
-}
-
-int& Game::cell_at(int x, int y) {
-    return stage[y * num_cells_x + x];
 }
 
 void Game::handle_input() {
@@ -80,14 +71,8 @@ void Game::handle_input() {
     }
 }
 
-void Game::get_pixel_bounds(int cell_x, int cell_y, int* x1, int* y1, int* x2, int* y2) {
-    *x1 = cell_x * scr->width / num_cells_x + 1;
-    *x2 = (cell_x + 1) * scr->width / num_cells_x - 1;
-    *y1 = cell_y * scr->height / num_cells_y + 1;
-    *y2 = (cell_y + 1) * scr->height / num_cells_y - 1;
-}
-
-void Game::draw_grid() {
+void Game::draw_world() {
+    scr->fill_screen(bg_color);
     scr->set_color(grid_color);
     for (int y = 1; y < num_cells_y; ++y) {
         scr->hor_line(y * scr->height / num_cells_y, 0, scr->width - 1);
@@ -97,32 +82,9 @@ void Game::draw_grid() {
     }
 }
 
-void Game::draw_snake() {
-    scr->set_color(snake_color);
-    for (auto & part : snake) {
-        int x1, y1, x2, y2;
-        get_pixel_bounds(part.x, part.y, &x1, &y1, &x2, &y2);
-        scr->fill_rect(x1, y1, x2, y2);
-    }
-}
-
-void Game::draw_fruit() {
-    int x1, y1, x2, y2;
-    get_pixel_bounds(fruit.x, fruit.y, &x1, &y1, &x2, &y2);
-    scr->fill_rect(x1, y1, x2, y2, fruit_color);
-}
-
-void Game::draw_game() {
-    scr->fill_screen(bg_color);
-    draw_grid();
-    draw_snake();
-    draw_fruit();
-    scr->commit_screen();
-}
-
 bool Game::collides_with_snake(Coord c) {
     for (auto & part : snake) {
-        if (part.x == c.x && part.y == c.y) {
+        if (part == c) {
             return true;
         }
     }
@@ -140,15 +102,13 @@ void Game::place_new_fruit() {
     } while (collides_with_snake(fruit));
 }
 
-void Game::init_game() {
-    direction = RIGHT;
-    last_move = NONE;
-    snake.clear();
-    snake.push_back({num_cells_x / 2, num_cells_y / 2});
-    snake.push_back({num_cells_x / 2 - 1, num_cells_y / 2});
-    snake.push_back({num_cells_x / 2 - 2, num_cells_y / 2});
-    place_new_fruit();
-    game_paused = true;
+void Game::draw_cell(Coord cell, Color color) {
+    int x1, y1, x2, y2;
+    x1 = cell.x * scr->width / num_cells_x + 1;
+    x2 = (cell.x + 1) * scr->width / num_cells_x - 1;
+    y1 = cell.y * scr->height / num_cells_y + 1;
+    y2 = (cell.y + 1) * scr->height / num_cells_y - 1;
+    scr->fill_rect(x1, y1, x2, y2, color);
 }
 
 void Game::step_game() {
@@ -176,21 +136,42 @@ void Game::step_game() {
     }
     }
     last_move = direction;
-    if (collides_with_snake(next) || out_of_bounds(next)) {
-        init_game();
+    if ((next != snake.back() && collides_with_snake(next)) ||
+            out_of_bounds(next)) {
+        init_game(); // game over
         return;
     }
     snake.push_front(next);
-    if (next.x == fruit.x && next.y == fruit.y) {
+    draw_cell(next, snake_color);
+    if (next == fruit) {
         place_new_fruit();
+        draw_cell(fruit, fruit_color);
     } else {
+        Coord c = snake.back();
         snake.pop_back();
+        draw_cell(c, bg_color);
     }
+}
+
+void Game::init_game() {
+    direction = RIGHT;
+    last_move = NONE;
+    game_paused = true;
+    game_running = true;
+    snake.clear();
+    snake.push_back({num_cells_x / 2, num_cells_y / 2});
+    snake.push_back({num_cells_x / 2 - 1, num_cells_y / 2});
+    snake.push_back({num_cells_x / 2 - 2, num_cells_y / 2});
+    draw_world();
+    for (auto& part : snake) {
+        draw_cell(part, snake_color);
+    }
+    place_new_fruit();
+    draw_cell(fruit, fruit_color);
 }
 
 // Runs the game loop
 void Game::play() {
-    bool simulate = true;
     init_game();
     while (game_running) {
         handle_input();
@@ -201,7 +182,7 @@ void Game::play() {
             }
             i++;
         }
-        draw_game();
+        scr->commit_screen();
     }
 }
 
