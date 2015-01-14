@@ -29,9 +29,10 @@ class Screen {
         const int rshift;
         const int gshift;
         const int bshift;
+        const bool vsynced;
 
         Screen(int size_x, int size_y, bool full_screen, const char * name,
-                bool vsync = true);
+               bool vsync);
         ~Screen();
 
         void commit_screen();

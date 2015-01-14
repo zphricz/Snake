@@ -4,17 +4,23 @@
 using std::cout;
 using std::endl;
 
-static const int slow_factor = 2;
-
 Color bg_color{25, 25, 25};
 Color grid_color{150, 150, 150};
 Color snake_color{0, 200, 0};
 Color fruit_color{200, 0, 0};
 
 Game::Game(int num_x, int num_y, Screen * screen) :
+    scr(screen),
     num_cells_x(num_x),
-    num_cells_y(num_y),
-    scr(screen) {
+    num_cells_y(num_y) {
+    if (num_cells_x < 4 || num_cells_y < 4) {
+        cout << "ERROR: Too few cells to play with" << endl;
+        exit(1);
+    }
+    if (num_cells_x > scr->width / 2 || num_cells_y > scr->height / 2) {
+        cout << "ERROR: Too many cells to display on this screen" << endl;
+        exit(1);
+    }
 }
 
 Game::~Game() {
@@ -54,6 +60,7 @@ void Game::handle_input() {
                 }
                 break;
             }
+            case SDLK_SPACE:
             case SDLK_RETURN: {
                 game_paused = !game_paused;
                 break;
@@ -136,8 +143,17 @@ void Game::step_game() {
     }
     }
     last_move = direction;
-    if ((next != snake.back() && collides_with_snake(next)) ||
-            out_of_bounds(next)) {
+    if (next == fruit) {
+        snake_growing += grow_factor;
+    } 
+    if (!snake_growing) {
+        Coord c = snake.back();
+        snake.pop_back();
+        draw_cell(c, bg_color);
+    } else {
+        snake_growing--;
+    }
+    if (collides_with_snake(next) || out_of_bounds(next)) {
         init_game(); // game over
         return;
     }
@@ -146,16 +162,13 @@ void Game::step_game() {
     if (next == fruit) {
         place_new_fruit();
         draw_cell(fruit, fruit_color);
-    } else {
-        Coord c = snake.back();
-        snake.pop_back();
-        draw_cell(c, bg_color);
     }
 }
 
 void Game::init_game() {
     direction = RIGHT;
     last_move = NONE;
+    snake_growing = 0;
     game_paused = true;
     game_running = true;
     snake.clear();
@@ -173,11 +186,11 @@ void Game::init_game() {
 // Runs the game loop
 void Game::play() {
     init_game();
+    int i = 0;
     while (game_running) {
         handle_input();
         if (!game_paused) {
-            static int i = 0;
-            if (i % slow_factor == 0) {
+            if (i % frames_per_update == 0) {
                 step_game();
             }
             i++;

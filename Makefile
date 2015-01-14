@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -Ofast
+CXXFLAGS = -std=c++11 -Ofast -Wall -Werror
 LDFLAGS = -lSDL2
 OS:= $(shell uname -s)
 
@@ -7,7 +7,7 @@ ifeq ($(OS), Darwin)
 	CXX = g++-4.9
 endif
 ifeq ($(OS), Linux)
-	CXX = clang++
+	CXX = g++
 endif
 
 snake: main.o Screen.o Game.o

@@ -18,10 +18,10 @@ int main(int argc, char* argv[])
     bool default_cells;
     bool full_screen;
     SDL_DisplayMode display;
-    SDL_Event event;
 
     // Initialize SDL.
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    //if (SDL_Init(SDL_INIT_VIDEOE) < 0) {
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         exit(1);
     }
     SDL_GetCurrentDisplayMode(0, &display);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     } else {
         full_screen = false;
     }
-    Screen scr(screen_width, screen_height, full_screen, "Snake");
+    Screen scr(screen_width, screen_height, full_screen, "Snake", true);
     Game g(cells_x, cells_y, &scr);
     g.play();
     return 0;
