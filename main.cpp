@@ -20,8 +20,7 @@ int main(int argc, char* argv[])
     SDL_DisplayMode display;
 
     // Initialize SDL.
-    //if (SDL_Init(SDL_INIT_VIDEOE) < 0) {
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         exit(1);
     }
     SDL_GetCurrentDisplayMode(0, &display);
