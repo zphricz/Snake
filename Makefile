@@ -9,7 +9,7 @@ ifeq ($(OS), Linux)
 	CXX = g++
 endif
 
-snake: main.o Screen.o Game.o
+snake: main.o Screen.o Game.o AI.o Util.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o$@ $^
 
 clean:
