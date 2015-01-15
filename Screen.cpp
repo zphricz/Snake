@@ -1,14 +1,17 @@
+#include <fstream>
 #include "Screen.h"
+using std::ofstream;
+using std::ios_base;
 
 Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
-                bool vsync) :
-    pixels(new Uint32[size_x * size_y]),
+                bool vsync, bool direct) :
     width(size_x),
     height(size_y),
     rshift(16),
     gshift(8),
     bshift(0),
-    vsynced(vsync) {
+    vsynced(vsync),
+    direct_draw(direct) {
     if (full_screen) {
         window = SDL_CreateWindow(name, 0, 0, width, height,
                         SDL_WINDOW_FULLSCREEN);
@@ -18,8 +21,8 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                         width, height, 0);
     }
     if (vsync) {
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED |
-                                                  SDL_RENDERER_PRESENTVSYNC);
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC |
+                                                  SDL_RENDERER_ACCELERATED);
     } else {
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     }
@@ -28,10 +31,20 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                                           width, height);
     Color c{255, 255, 255};
     default_color = format_color(c);
+    if (direct_draw) {
+        int pitch;
+        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels), &pitch);
+    } else {
+        pixels = new Uint32[width * height];
+    }
 }
 
 Screen::~Screen() {
-    delete [] pixels;
+    if (direct_draw) {
+        SDL_UnlockTexture(texture);
+    } else {
+        delete [] pixels;
+    }
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -50,9 +63,17 @@ Uint32 Screen::format_color(Color c) {
 }
 
 void Screen::commit_screen() {
-    SDL_UpdateTexture(texture, NULL, pixels, width * sizeof (Uint32));
+    if (direct_draw) {
+        SDL_UnlockTexture(texture);
+    } else {
+        SDL_UpdateTexture(texture, NULL, pixels, width * sizeof (Uint32));
+    }
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+    if (direct_draw) {
+        int pitch;
+        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels), &pitch);
+    }
 }
 
 bool Screen::on_screen(int x, int y) {
@@ -364,5 +385,21 @@ void Screen::fill_circle(int x, int y, int r) {
 
 void Screen::fill_circle(int x, int y, int r, Color c) {
     fill_circle(x, y, r, format_color(c));
+}
+
+void Screen::write_tga(const char * name) {
+    ofstream file(name, ios_base::binary);
+    file.put(0).put(0).put(2).put(0).put(0).put(0).put(0).put(0).put(0).put(0);
+    file.put(0).put(0).put(width & 0xFF).put((width & 0xFF00) >> 8);
+    file.put(height & 0xFF).put((height & 0xFF00) >> 8).put(24).put(0);
+    for (int y = height - 1; y >= 0; --y) {
+        for (int x = 0; x < width; ++x) {
+            Uint32 c = pixel_at(x, y);
+            Uint8 r = (c & (0xFF << rshift)) >> rshift;
+            Uint8 g = (c & (0xFF << gshift)) >> gshift;
+            Uint8 b = (c & (0xFF << bshift)) >> bshift;
+            file.put(b).put(g).put(r);
+        }
+    }
 }
 

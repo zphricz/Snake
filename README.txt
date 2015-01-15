@@ -14,6 +14,12 @@ run it with:
 
     ./life [Board_x Board_y] [Screen_x Screen_y]
 
+Use the arrow keys to move the snake. Press space or enter to pause and start
+the game.  To close the program, press the escape key.
+
+I've implemented a very simple AI player for the game. To enable or disable the
+AI player, change the value of DO_AI in Game.h and recompile.
+
 Authors
 -------
 

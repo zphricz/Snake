@@ -3,7 +3,6 @@ LDFLAGS = -lSDL2
 OS:= $(shell uname -s)
 
 ifeq ($(OS), Darwin)
-	LDFLAGS += -framework Cocoa
 	CXX = g++-4.9
 endif
 ifeq ($(OS), Linux)

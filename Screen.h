@@ -15,7 +15,7 @@ struct Color {
 
 class Screen {
     private:
-        Uint32* const pixels;
+        Uint32 * pixels;
         Uint32 default_color;
         SDL_Window* window;
         SDL_Renderer* renderer;
@@ -30,9 +30,13 @@ class Screen {
         const int gshift;
         const int bshift;
         const bool vsynced;
+        const bool direct_draw; /* Set to true for increased drawing
+                                   performance. This may result in visual
+                                   artifacts if drawing right after calling
+                                   commit_screen */
 
         Screen(int size_x, int size_y, bool full_screen, const char * name,
-               bool vsync);
+               bool vsync, bool direct = false);
         ~Screen();
 
         void commit_screen();
@@ -71,6 +75,7 @@ class Screen {
         void fill_circle(int x, int y, int r, Uint32 c);
         void fill_circle(int x, int y, int r);
         void fill_circle(int x, int y, int r, Color c);
+        void write_tga(const char * name);
 };
 
 #endif
