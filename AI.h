@@ -2,6 +2,7 @@
 #define AI_H
 
 #include <list>
+#include <vector>
 #include <SDL2/SDL.h>
 #include "Util.h"
 
@@ -9,18 +10,17 @@ const Uint32 ai_turn_time = 10; // milliseconds
 
 class AI {
 private:
-    bool* grid;
-    bool* snake_lookup;
+    std::vector<Uint8> grid;
+    std::vector<Uint8> snake_lookup;
     std::list<Coord> snake;
-    int num_cells_x;
-    int num_cells_y;
+    const int num_cells_x;
+    const int num_cells_y;
     Coord fruit;
     bool times_up;
     Uint32 ai_start_time;
 
-    bool& lookup_at(Coord c);
-    bool& grid_at(Coord c);
-    bool already_checked(Coord c);
+    Uint8& lookup_at(Coord c);
+    Uint8& grid_at(Coord c);
     bool out_of_bounds(Coord c);
     int num_empty_spaces(Coord c);
     Direction search_for_move();

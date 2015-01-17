@@ -9,6 +9,8 @@ const int grow_factor = 3;
 
 class Game {
 private:
+    const int num_cells_x;
+    const int num_cells_y;
     Screen* const scr;
     bool game_running;
     bool game_paused;
@@ -21,6 +23,8 @@ private:
     bool ai_plays;
     int frames_per_update;
     AI ai_player;
+    bool recording;
+    int image_number;
 
     void handle_input();
     void draw_world();
@@ -32,8 +36,6 @@ private:
     void step_game();
 
 public:
-    const int num_cells_x;
-    const int num_cells_y;
     Game(int num_x, int num_y, Screen* screen);
     ~Game();
     void play();

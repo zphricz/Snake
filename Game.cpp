@@ -1,11 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
+#include <string>
+#include <iomanip>
 #include "Game.h"
 
-using std::cout;
-using std::endl;
-using std::list;
-using std::vector;
+using namespace std;
 
 Color bg_color{25, 25, 25};
 Color grid_color{150, 150, 150};
@@ -15,10 +15,12 @@ Color dead_color{100, 0, 0};
 Color head_color{0, 0, 200};
 
 Game::Game(int num_x, int num_y, Screen * screen) :
+    num_cells_x(num_x),
+    num_cells_y(num_y),
     scr(screen),
     ai_player(num_x, num_y),
-    num_cells_x(num_x),
-    num_cells_y(num_y) {
+    recording(false),
+    image_number(0) {
     if (num_cells_x < 4 || num_cells_y < 4) {
         cout << "ERROR: Too few cells to play with" << endl;
         exit(1);
@@ -27,7 +29,6 @@ Game::Game(int num_x, int num_y, Screen * screen) :
         cout << "ERROR: Too many cells to display on this screen" << endl;
         exit(1);
     }
-    ai_plays = false;
 }
 
 Game::~Game() {
@@ -84,6 +85,10 @@ void Game::handle_input() {
                 } else {
                     frames_per_update = 2;
                 }
+                break;
+            }
+            case SDLK_2: {
+                recording = !recording;
                 break;
             }
             default: {
@@ -227,6 +232,13 @@ void Game::play() {
                 step_game();
             }
             i++;
+        }
+        if (recording) {
+            ostringstream convert;
+            convert << setw(5) << setfill('0') << image_number;
+            string name = "images/image_" + convert.str() + ".tga";
+            scr->write_tga(name.c_str());
+            image_number++;
         }
         scr->commit_screen();
     }

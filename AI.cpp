@@ -1,6 +1,5 @@
-#include <vector>
 #include <iostream>
-#include <assert.h>
+#include <algorithm>
 #include "AI.h"
 
 using namespace std;
@@ -8,20 +7,18 @@ using namespace std;
 AI::AI(int num_x, int num_y) :
     num_cells_x(num_x),
     num_cells_y(num_y) {
-    grid = new bool[num_cells_x * num_cells_y];
-    snake_lookup = new bool[num_cells_x * num_cells_y];
+    grid.resize(num_cells_x * num_cells_y);
+    snake_lookup.resize(num_cells_x * num_cells_y);
 }
 
 AI::~AI() {
-    delete [] snake_lookup;
-    delete [] grid;
 }
 
-bool& AI::lookup_at(Coord c) {
+Uint8& AI::lookup_at(Coord c) {
     return snake_lookup[c.y * num_cells_x + c.x];
 }
 
-bool& AI::grid_at(Coord c) {
+Uint8& AI::grid_at(Coord c) {
     return grid[c.y * num_cells_x + c.x];
 }
 
@@ -31,7 +28,7 @@ bool AI::out_of_bounds(Coord c) {
 
 int AI::num_empty_spaces(Coord c) {
     int size = 0;
-    memcpy(grid, snake_lookup, num_cells_x * num_cells_y);
+    copy(snake_lookup.begin(), snake_lookup.end(), grid.begin());
     vector<Coord> v;
     v.push_back(c);
     while (!v.empty()) {
@@ -125,8 +122,8 @@ Direction AI::search_for_move() {
         }
         switch (dirs[i]) {
         case RIGHT: {
-            //if (!out_of_bounds(right) && !already_checked(right) && !detect_collision(right, snake_lookup)) {
-            if (!out_of_bounds(right) && !lookup_at(right)) {
+            if (!out_of_bounds(right) && !grid_at(right) && !lookup_at(right)) {
+                grid_at(right) = true;
                 snake.push_front(right);
                 lookup_at(right) = true;
                 if (search_for_move() != NONE) {
@@ -142,8 +139,8 @@ Direction AI::search_for_move() {
             break;
         }
         case LEFT: {
-            //if (!out_of_bounds(left) && !already_checked(left) && !detect_collision(left, snake_lookup)) {
-            if (!out_of_bounds(left) && !lookup_at(left)) {
+            if (!out_of_bounds(left) && !grid_at(left) && !lookup_at(left)) {
+                grid_at(left) = true;
                 snake.push_front(left);
                 lookup_at(left) = true;
                 if (search_for_move() != NONE) {
@@ -159,8 +156,8 @@ Direction AI::search_for_move() {
             break;
         }
         case UP: {
-            //if (!out_of_bounds(up) && !already_checked(up) && !detect_collision(up, snake_lookup)) {
-            if (!out_of_bounds(up) && !lookup_at(up)) {
+            if (!out_of_bounds(up) && !grid_at(up) && !lookup_at(up)) {
+                grid_at(up) = true;
                 snake.push_front(up);
                 lookup_at(up) = true;
                 if (search_for_move() != NONE) {
@@ -176,8 +173,8 @@ Direction AI::search_for_move() {
             break;
         }
         case DOWN: {
-            //if (!out_of_bounds(down) && !already_checked(down) && !detect_collision(down, snake_lookup)) {
-            if (!out_of_bounds(down) && !lookup_at(down)) {
+            if (!out_of_bounds(down) && !grid_at(down) && !lookup_at(down)) {
+                grid_at(down) = true;
                 snake.push_front(down);
                 lookup_at(down) = true;
                 if (search_for_move() != NONE) {
@@ -206,26 +203,19 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
     // AI fails to take into account that the snake can be growing
     // TODO: Fix this
     fruit = orig_fruit;
-    snake = list<Coord>(orig_snake);
-    assert(snake == orig_snake);
-    memset(snake_lookup, 0, num_cells_x * num_cells_y);
-    memset(grid, 0, num_cells_x * num_cells_y);
+    snake = orig_snake;
+    fill(snake_lookup.begin(), snake_lookup.end(), false);
+    fill(grid.begin(), grid.end(), false);
     for (auto& part: snake) {
         lookup_at(part) = true;
         grid_at(part) = true;
     }
-    ai_start_time = SDL_GetTicks();
     times_up = false;
+    ai_start_time = SDL_GetTicks();
     Direction d = search_for_move();
-    assert(snake == orig_snake);
     if (d != NONE) {
         return d;
     } else {
-        if (times_up) {
-            static int i = 0;
-            cout << "TIME'S UP: " << i << endl;
-            i++;
-        }
         Coord back = snake.back();
         snake.pop_back();
         lookup_at(back) = false;
@@ -268,50 +258,43 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
         if (!out_of_bounds(up) && !lookup_at(up)) {
             num_empty_spaces_up = num_empty_spaces(up);
         }
-        /*std::string s;
-        cout << "num_empty_spaces LEFT : " << num_empty_spaces_left << endl;
-        cout << "num_empty_spaces RIGHT: " << num_empty_spaces_right << endl;
-        cout << "num_empty_spaces UP   : " << num_empty_spaces_up << endl;
-        cout << "num_empty_spaces DOWN : " << num_empty_spaces_down << endl;
-        cout << "num_empty_spaces NEXT : " << num_empty_spaces_next << endl;
-        std::cin >> s;*/
         switch (last_move) {
         case UP: {
-            if (num_empty_spaces_right >= num_empty_spaces_left && num_empty_spaces_right >= num_empty_spaces_up) {
+            if (num_empty_spaces_up >= num_empty_spaces_right && num_empty_spaces_up >= num_empty_spaces_left) {
+                return UP;
+            } else if (num_empty_spaces_right >= num_empty_spaces_left) {
                 return RIGHT;
-            } else if (num_empty_spaces_left >= num_empty_spaces_up) {
-                return LEFT;
             } else {
-                return last_move;
+                return LEFT;
             }
             break;
         } 
         case DOWN: {
-            if (num_empty_spaces_right >= num_empty_spaces_left && num_empty_spaces_right >= num_empty_spaces_down) {
-                return RIGHT;
-            } else if (num_empty_spaces_left >= num_empty_spaces_down) {
+            if (num_empty_spaces_left >= num_empty_spaces_down && num_empty_spaces_left >= num_empty_spaces_right) {
                 return LEFT;
+            } else if (num_empty_spaces_right >= num_empty_spaces_down) {
+                return RIGHT;
             } else {
-                return last_move;
+                return DOWN;
             }
             break;
         }
         case LEFT: {
-            if (num_empty_spaces_up >= num_empty_spaces_down && num_empty_spaces_up >= num_empty_spaces_left) {
+            if (num_empty_spaces_up >= num_empty_spaces_left && num_empty_spaces_up >= num_empty_spaces_down) {
                 return UP;
-            } else if (num_empty_spaces_down >= num_empty_spaces_left) {
-                return DOWN;
+            } else if (num_empty_spaces_left >= num_empty_spaces_down) {
+                return LEFT;
             } else {
-                return last_move;
+                return DOWN;
             }
         }
         case RIGHT: {
-            if (num_empty_spaces_up >= num_empty_spaces_down && num_empty_spaces_up >= num_empty_spaces_right) {
+            if (num_empty_spaces_up >= num_empty_spaces_right && num_empty_spaces_up >= num_empty_spaces_down) {
                 return UP;
-            } else if (num_empty_spaces_down >= num_empty_spaces_right) {
-                return DOWN;
+            } else if (num_empty_spaces_right >= num_empty_spaces_down) {
+                return RIGHT;
             } else {
-                return last_move;
+                return DOWN;
             }
         }
         default: {
@@ -321,3 +304,4 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
         }
     }
 }
+

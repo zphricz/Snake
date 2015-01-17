@@ -15,7 +15,7 @@ struct Color {
 
 class Screen {
     private:
-        Uint32 * pixels;
+        Uint32* pixels;
         Uint32 default_color;
         SDL_Window* window;
         SDL_Renderer* renderer;
