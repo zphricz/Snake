@@ -26,15 +26,17 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
     } else {
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     }
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                          SDL_TEXTUREACCESS_STREAMING,
-                                          width, height);
-    Color c{255, 255, 255};
-    default_color = format_color(c);
+    default_color = format_color(255, 255, 255);
     if (direct_draw) {
+        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                                              SDL_TEXTUREACCESS_STREAMING,
+                                              width, height);
         int pitch;
         SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels), &pitch);
     } else {
+        texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                                              SDL_TEXTUREACCESS_STATIC,
+                                              width, height);
         pixels = new Uint32[width * height];
     }
 }

@@ -120,11 +120,16 @@ void Game::draw_cell(Coord cell, Color color) {
 }
 
 bool Game::collides_with_snake(Coord c) {
-    return detect_collision(c, snake);
+    for (auto & part : snake) {
+        if (part == c) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Game::out_of_bounds(Coord c) {
-    return is_out_of_bounds(c, num_cells_x, num_cells_y);
+    return (c.x >= num_cells_x) || (c.x < 0) || (c.y >= num_cells_y) || (c.y < 0);
 }
 
 void Game::place_new_fruit() {

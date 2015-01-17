@@ -1,64 +1,66 @@
 #include <vector>
+#include <iostream>
+#include <assert.h>
 #include "AI.h"
 
-using std::list;
-using std::vector;
+using namespace std;
 
 AI::AI(int num_x, int num_y) :
     num_cells_x(num_x),
     num_cells_y(num_y) {
     grid = new bool[num_cells_x * num_cells_y];
+    snake_lookup = new bool[num_cells_x * num_cells_y];
 }
 
 AI::~AI() {
+    delete [] snake_lookup;
     delete [] grid;
 }
 
-bool AI::already_checked(Coord c) {
-    bool rval = grid[c.y * num_cells_x + c.x];
-    grid[c.y * num_cells_x + c.x] = true;
-    return rval;
+bool& AI::lookup_at(Coord c) {
+    return snake_lookup[c.y * num_cells_x + c.x];
+}
+
+bool& AI::grid_at(Coord c) {
+    return grid[c.y * num_cells_x + c.x];
 }
 
 bool AI::out_of_bounds(Coord c) {
-    return is_out_of_bounds(c, num_cells_x, num_cells_y);
+    return (c.x >= num_cells_x) || (c.x < 0) || (c.y >= num_cells_y) || (c.y < 0);
 }
 
-int AI::enclosed(Coord c, const list<Coord>& s) {
+int AI::num_empty_spaces(Coord c) {
     int size = 0;
-    memset(grid, 0, num_cells_x * num_cells_y);
-    for (auto& part : s) {
-        grid[num_cells_x * part.y + part.x] = true;
-    }
+    memcpy(grid, snake_lookup, num_cells_x * num_cells_y);
     vector<Coord> v;
     v.push_back(c);
     while (!v.empty()) {
-        size++;
         Coord new_c = v.back();
         v.pop_back();
-        grid[new_c.y * num_cells_x + new_c.x] = true;
+        size++;
+        grid_at(new_c) = true;
         Coord c1{new_c.x - 1, new_c.y};
         Coord c2{new_c.x + 1, new_c.y};
         Coord c3{new_c.x, new_c.y - 1};
         Coord c4{new_c.x, new_c.y + 1};
-        if (!out_of_bounds(c1) && !grid[c1.y * num_cells_x + c1.x]) {
+        if (!out_of_bounds(c1) && !grid_at(c1)) {
             v.push_back(c1);
         }
-        if (!out_of_bounds(c2) && !grid[c2.y * num_cells_x + c2.x]) {
+        if (!out_of_bounds(c2) && !grid_at(c2)) {
             v.push_back(c2);
         }
-        if (!out_of_bounds(c3) && !grid[c3.y * num_cells_x + c3.x]) {
+        if (!out_of_bounds(c3) && !grid_at(c3)) {
             v.push_back(c3);
         }
-        if (!out_of_bounds(c4) && !grid[c4.y * num_cells_x + c4.x]) {
+        if (!out_of_bounds(c4) && !grid_at(c4)) {
             v.push_back(c4);
         }
     }
     return size;
 }
 
-Direction AI::search_for_move(Coord fruit, const list<Coord>& s) {
-    Coord c = s.front();
+Direction AI::search_for_move() {
+    Coord c = snake.front();
     Coord right{c.x + 1, c.y};
     Coord left{c.x - 1, c.y};
     Coord up{c.x, c.y - 1};
@@ -71,6 +73,10 @@ Direction AI::search_for_move(Coord fruit, const list<Coord>& s) {
         return UP;
     } else if (down == fruit) {
         return DOWN;
+    }
+    if (SDL_GetTicks() - ai_start_time >= ai_turn_time) {
+        times_up = true;
+        return NONE;
     }
     Direction dirs[4];
     if (fruit.x > c.x) {
@@ -108,54 +114,81 @@ Direction AI::search_for_move(Coord fruit, const list<Coord>& s) {
             dirs[3] = DOWN;
         }
     }
-    if (SDL_GetTicks() - ai_start_time >= ai_turn_time) {
-        times_up = true;
-        return NONE;
-    }
-    auto new_snake = list<Coord>(s);
-    new_snake.pop_back();
+    Coord back = snake.back();
+    snake.pop_back();
+    lookup_at(back) = false;
     for (int i = 0; i < 4; ++i) {
         if (times_up) {
+            snake.push_back(back);
+            lookup_at(back) = true;
             return NONE;
         }
         switch (dirs[i]) {
         case RIGHT: {
-            if (!out_of_bounds(right) && !already_checked(right) && !detect_collision(right, new_snake)) {
-                new_snake.push_front(right);
-                if (search_for_move(fruit, new_snake) != NONE) {
+            //if (!out_of_bounds(right) && !already_checked(right) && !detect_collision(right, snake_lookup)) {
+            if (!out_of_bounds(right) && !lookup_at(right)) {
+                snake.push_front(right);
+                lookup_at(right) = true;
+                if (search_for_move() != NONE) {
+                    snake.pop_front();
+                    lookup_at(right) = false;
+                    snake.push_back(back);
+                    lookup_at(back) = true;
                     return RIGHT;
                 }
-                new_snake.pop_front();
+                snake.pop_front();
+                lookup_at(right) = false;
             }
             break;
         }
         case LEFT: {
-            if (!out_of_bounds(left) && !already_checked(left) && !detect_collision(left, new_snake)) {
-                new_snake.push_front(left);
-                if (search_for_move(fruit, new_snake) != NONE) {
+            //if (!out_of_bounds(left) && !already_checked(left) && !detect_collision(left, snake_lookup)) {
+            if (!out_of_bounds(left) && !lookup_at(left)) {
+                snake.push_front(left);
+                lookup_at(left) = true;
+                if (search_for_move() != NONE) {
+                    snake.pop_front();
+                    lookup_at(left) = false;
+                    snake.push_back(back);
+                    lookup_at(back) = true;
                     return LEFT;
                 }
-                new_snake.pop_front();
+                snake.pop_front();
+                lookup_at(left) = false;
             }
             break;
         }
         case UP: {
-            if (!out_of_bounds(up) && !already_checked(up) && !detect_collision(up, new_snake)) {
-                new_snake.push_front(up);
-                if (search_for_move(fruit, new_snake) != NONE) {
+            //if (!out_of_bounds(up) && !already_checked(up) && !detect_collision(up, snake_lookup)) {
+            if (!out_of_bounds(up) && !lookup_at(up)) {
+                snake.push_front(up);
+                lookup_at(up) = true;
+                if (search_for_move() != NONE) {
+                    snake.pop_front();
+                    lookup_at(up) = false;
+                    snake.push_back(back);
+                    lookup_at(back) = true;
                     return UP;
                 }
-                new_snake.pop_front();
+                snake.pop_front();
+                lookup_at(up) = false;
             }
             break;
         }
         case DOWN: {
-            if (!out_of_bounds(down) && !already_checked(down) && !detect_collision(down, new_snake)) {
-                new_snake.push_front(down);
-                if (search_for_move(fruit, new_snake) != NONE) {
+            //if (!out_of_bounds(down) && !already_checked(down) && !detect_collision(down, snake_lookup)) {
+            if (!out_of_bounds(down) && !lookup_at(down)) {
+                snake.push_front(down);
+                lookup_at(down) = true;
+                if (search_for_move() != NONE) {
+                    snake.pop_front();
+                    lookup_at(down) = false;
+                    snake.push_back(back);
+                    lookup_at(back) = true;
                     return DOWN;
                 }
-                new_snake.pop_front();
+                snake.pop_front();
+                lookup_at(down) = false;
             }
             break;
         }
@@ -164,21 +197,38 @@ Direction AI::search_for_move(Coord fruit, const list<Coord>& s) {
         } 
         }
     }
+    snake.push_back(back);
+    lookup_at(back) = true;
     return NONE;
 }
 
-Direction AI::move(Coord fruit, Direction last_move, const list<Coord>& snake) {
+Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& orig_snake) {
     // AI fails to take into account that the snake can be growing
     // TODO: Fix this
+    fruit = orig_fruit;
+    snake = list<Coord>(orig_snake);
+    assert(snake == orig_snake);
+    memset(snake_lookup, 0, num_cells_x * num_cells_y);
+    memset(grid, 0, num_cells_x * num_cells_y);
+    for (auto& part: snake) {
+        lookup_at(part) = true;
+        grid_at(part) = true;
+    }
     ai_start_time = SDL_GetTicks();
     times_up = false;
-    memset(grid, 0, num_cells_x * num_cells_y);
-    Direction d = search_for_move(fruit, snake);
+    Direction d = search_for_move();
+    assert(snake == orig_snake);
     if (d != NONE) {
         return d;
     } else {
-        auto new_snake = list<Coord>(snake);
-        new_snake.pop_back();
+        if (times_up) {
+            static int i = 0;
+            cout << "TIME'S UP: " << i << endl;
+            i++;
+        }
+        Coord back = snake.back();
+        snake.pop_back();
+        lookup_at(back) = false;
         Coord c = snake.front();
         Coord right{c.x + 1, c.y};
         Coord left{c.x - 1, c.y};
@@ -202,42 +252,72 @@ Direction AI::move(Coord fruit, Direction last_move, const list<Coord>& snake) {
             next = c;
             break;
         }
-        int enclosed_left = 0;
-        int enclosed_up = 0;
-        int enclosed_down = 0;
-        int enclosed_right = 0;
-        int enclosed_next = 0;
-        if (!out_of_bounds(left) && !detect_collision(left, new_snake)) {
-            enclosed_left = enclosed(left, new_snake);
+        int num_empty_spaces_left = 0;
+        int num_empty_spaces_up = 0;
+        int num_empty_spaces_down = 0;
+        int num_empty_spaces_right = 0;
+        if (!out_of_bounds(left) && !lookup_at(left)) {
+            num_empty_spaces_left = num_empty_spaces(left);
         }
-        if (!out_of_bounds(right) && !detect_collision(right, new_snake)) {
-            enclosed_right = enclosed(right, new_snake);
+        if (!out_of_bounds(right) && !lookup_at(right)) {
+            num_empty_spaces_right = num_empty_spaces(right);
         }
-        if (!out_of_bounds(down) && !detect_collision(down, new_snake)) {
-            enclosed_down = enclosed(down, new_snake);
+        if (!out_of_bounds(down) && !lookup_at(down)) {
+            num_empty_spaces_down = num_empty_spaces(down);
         }
-        if (!out_of_bounds(up) && !detect_collision(up, new_snake)) {
-            enclosed_up = enclosed(up, new_snake);
+        if (!out_of_bounds(up) && !lookup_at(up)) {
+            num_empty_spaces_up = num_empty_spaces(up);
         }
-        if (!out_of_bounds(next) && !detect_collision(next, new_snake)) {
-            enclosed_next = enclosed(next, new_snake);
-        }
-        if (last_move == UP || last_move == DOWN) {
-            if (enclosed_right >= enclosed_left && enclosed_right >= enclosed_next) {
+        /*std::string s;
+        cout << "num_empty_spaces LEFT : " << num_empty_spaces_left << endl;
+        cout << "num_empty_spaces RIGHT: " << num_empty_spaces_right << endl;
+        cout << "num_empty_spaces UP   : " << num_empty_spaces_up << endl;
+        cout << "num_empty_spaces DOWN : " << num_empty_spaces_down << endl;
+        cout << "num_empty_spaces NEXT : " << num_empty_spaces_next << endl;
+        std::cin >> s;*/
+        switch (last_move) {
+        case UP: {
+            if (num_empty_spaces_right >= num_empty_spaces_left && num_empty_spaces_right >= num_empty_spaces_up) {
                 return RIGHT;
-            } else if (enclosed_left >= enclosed_next) {
+            } else if (num_empty_spaces_left >= num_empty_spaces_up) {
                 return LEFT;
             } else {
                 return last_move;
             }
-        } else {
-            if (enclosed_up >= enclosed_down && enclosed_up >= enclosed_next) {
+            break;
+        } 
+        case DOWN: {
+            if (num_empty_spaces_right >= num_empty_spaces_left && num_empty_spaces_right >= num_empty_spaces_down) {
+                return RIGHT;
+            } else if (num_empty_spaces_left >= num_empty_spaces_down) {
+                return LEFT;
+            } else {
+                return last_move;
+            }
+            break;
+        }
+        case LEFT: {
+            if (num_empty_spaces_up >= num_empty_spaces_down && num_empty_spaces_up >= num_empty_spaces_left) {
                 return UP;
-            } else if (enclosed_down >= enclosed_next) {
+            } else if (num_empty_spaces_down >= num_empty_spaces_left) {
                 return DOWN;
             } else {
                 return last_move;
             }
+        }
+        case RIGHT: {
+            if (num_empty_spaces_up >= num_empty_spaces_down && num_empty_spaces_up >= num_empty_spaces_right) {
+                return UP;
+            } else if (num_empty_spaces_down >= num_empty_spaces_right) {
+                return DOWN;
+            } else {
+                return last_move;
+            }
+        }
+        default: {
+            return last_move;
+            break;
+        }
         }
     }
 }

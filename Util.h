@@ -2,6 +2,8 @@
 #define UTIL_H
 
 #include <list>
+#include <unordered_set>
+#include <functional>
 
 struct Coord {
     int x;
@@ -14,9 +16,14 @@ struct Coord {
     }
 };
 
-typedef enum {UP, DOWN, LEFT, RIGHT, NONE} Direction;
+namespace std {
+    template <> struct hash<Coord> {
+        size_t operator() (const Coord& c) const {
+            return (size_t) ((c.x << 16) | c.y);
+        }
+    };
+}
 
-bool detect_collision(Coord c, const std::list<Coord>& s);
-bool is_out_of_bounds(Coord c, int num_cells_x, int num_cells_y);
+typedef enum {UP, DOWN, LEFT, RIGHT, NONE} Direction;
 
 #endif
