@@ -57,6 +57,8 @@ int AI::num_empty_spaces(Coord c) {
 }
 
 Direction AI::search_for_move() {
+    // TODO: The snake will always attempt to get a fruit, even it it assures
+    //       that the snake dies. Fix this
     Coord c = snake.front();
     Coord right{c.x + 1, c.y};
     Coord left{c.x - 1, c.y};
@@ -258,6 +260,10 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
         if (!out_of_bounds(up) && !lookup_at(up)) {
             num_empty_spaces_up = num_empty_spaces(up);
         }
+        //TODO: Make the snake prioritize moving into enclosed areas where its
+        //      tail is (it can follow the tail safely)
+        //TODO: This currently space fills only from top to bottom, make it able
+        //      to space fill in any of the four directions
         switch (last_move) {
         case UP: {
             if (num_empty_spaces_up >= num_empty_spaces_right && num_empty_spaces_up >= num_empty_spaces_left) {

@@ -38,6 +38,10 @@ void Game::handle_input() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
+        case SDL_QUIT: {
+            game_running = false;
+            break;
+        }
         case SDL_KEYDOWN: {
             switch (event.key.keysym.sym) {
             case SDLK_ESCAPE: {
