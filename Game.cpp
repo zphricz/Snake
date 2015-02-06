@@ -18,9 +18,10 @@ Game::Game(int num_x, int num_y, Screen * screen) :
     num_cells_x(num_x),
     num_cells_y(num_y),
     scr(screen),
-    ai_player(num_x, num_y),
-    recording(false),
-    image_number(0) {
+    game_running(true),
+    ai_plays(false),
+    ai_speed(1),
+    ai_player(num_x, num_y) {
     if (num_cells_x < 4 || num_cells_y < 4) {
         cout << "ERROR: Too few cells to play with" << endl;
         exit(1);
@@ -29,6 +30,7 @@ Game::Game(int num_x, int num_y, Screen * screen) :
         cout << "ERROR: Too many cells to display on this screen" << endl;
         exit(1);
     }
+    scr->set_recording_style("images", 5);
 }
 
 Game::~Game() {
@@ -49,12 +51,18 @@ void Game::handle_input() {
                 break;
             }
             case SDLK_LEFT: {
+                if (ai_plays && ai_speed > 1) {
+                    ai_speed /= 2;
+                }
                 if (last_move != RIGHT && !game_paused) {
                     direction = LEFT;
                 }
                 break;
             }
             case SDLK_RIGHT: {
+                if (ai_plays && ai_speed < 1024) {
+                    ai_speed *= 2;
+                }
                 if (last_move != LEFT && !game_paused) {
                     direction = RIGHT;
                 }
@@ -84,15 +92,10 @@ void Game::handle_input() {
             }
             case SDLK_1: {
                 ai_plays = !ai_plays;
-                if (ai_plays) {
-                    frames_per_update = 1;
-                } else {
-                    frames_per_update = 2;
-                }
                 break;
             }
-            case SDLK_2: {
-                recording = !recording;
+            case SDLK_0: {
+                scr->toggle_recording();
                 break;
             }
             default: {
@@ -187,6 +190,7 @@ void Game::step_game() {
         for (auto& part : snake) {
             draw_cell(part, dead_color);
         }
+        cout << "Game Over" << endl;
         game_over = true;
         game_paused = true;
         return;
@@ -197,6 +201,8 @@ void Game::step_game() {
     if (next == fruit) {
         place_new_fruit();
         draw_cell(fruit, fruit_color);
+        score++;
+        cout << "Score: " << score << endl;
     }
 }
 
@@ -205,10 +211,8 @@ void Game::init_game() {
     last_move = NONE;
     snake_growing = 0;
     game_paused = true;
-    game_running = true;
     game_over = false;
-    ai_plays = false;
-    frames_per_update = 2;
+    score = 0;
     snake.clear();
     snake.push_back({num_cells_x / 2, num_cells_y / 2});
     snake.push_back({num_cells_x / 2 - 1, num_cells_y / 2});
@@ -220,6 +224,7 @@ void Game::init_game() {
     draw_cell(snake.front(), head_color);
     place_new_fruit();
     draw_cell(fruit, fruit_color);
+    cout << "Game Start" << endl;
 }
 
 // Runs the game loop
@@ -229,22 +234,20 @@ void Game::play() {
     while (game_running) {
         handle_input();
         if (!game_paused) {
-            if (i % frames_per_update == 0) {
-                if (ai_plays) {
+            if (ai_plays) {
+                for (int j = 0; j < ai_speed; ++j) {
                     direction = ai_player.move(fruit, last_move, snake);
+                    step_game();
+                    if (game_over) {
+                        break;
+                    }
                 }
+            } else if (i % frames_per_update == 0) {
                 step_game();
             }
             i++;
         }
-        if (recording) {
-            ostringstream convert;
-            convert << setw(5) << setfill('0') << image_number;
-            string name = "images/image_" + convert.str() + ".tga";
-            scr->write_tga(name.c_str());
-            image_number++;
-        }
-        scr->commit_screen();
+        scr->commit();
     }
 }
 

@@ -7,6 +7,7 @@
 #include "Util.h"
 
 const Uint32 ai_turn_time = 10; // milliseconds
+const Uint8 MAX_SEARCH = 1;
 
 class AI {
 private:
@@ -18,12 +19,15 @@ private:
     Coord fruit;
     bool times_up;
     Uint32 ai_start_time;
+    Direction chosen_direction;
+    Direction first_move;
+    Uint32 chosen_depth;
 
     Uint8& lookup_at(Coord c);
     Uint8& grid_at(Coord c);
     bool out_of_bounds(Coord c);
     int num_empty_spaces(Coord c);
-    Direction search_for_move();
+    void search_for_move(Uint32 depth);
     
 public:
     AI(int num_x, int num_y);

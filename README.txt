@@ -20,8 +20,8 @@ the game.  To close the program, press the escape key.
 I've implemented a very simple AI player for the game. To enable or disable the
 AI player, press 1.
 
-To make a recording of the game, press 2. Every frame rendered will be written
-out as a .tga picture inside an "images" directory. Press 2 again to stop
+To make a recording of the game, press 0. Every frame rendered will be written
+out as a .tga picture inside an "images" directory. Press 0 again to stop
 recording.
 
 Authors

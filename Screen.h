@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 
+#include <string>
+
 #define CLIPPED 0
 #define likely(x)   __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
@@ -20,6 +22,10 @@ class Screen {
         SDL_Window* window;
         SDL_Renderer* renderer;
         SDL_Texture* texture;
+        bool recording;
+        int image_number;
+        std::string image_dir;
+        int z_fill;
 
         inline Uint32& pixel_at(int x, int y);
 
@@ -33,13 +39,13 @@ class Screen {
         const bool direct_draw; /* Set to true for increased drawing
                                    performance. This may result in visual
                                    artifacts if drawing right after calling
-                                   commit_screen */
+                                   commit */
 
         Screen(int size_x, int size_y, bool full_screen, const char * name,
                bool vsync, bool direct = false);
         ~Screen();
 
-        void commit_screen();
+        void commit();
         bool on_screen(int x, int y);
         int clip_x(int x);
         int clip_y(int y);
@@ -76,6 +82,8 @@ class Screen {
         void fill_circle(int x, int y, int r);
         void fill_circle(int x, int y, int r, Color c);
         void write_tga(const char * name);
+        void toggle_recording();
+        void set_recording_style(const char * image_dir, int z_fill);
 };
 
 #endif

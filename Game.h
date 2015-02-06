@@ -6,6 +6,7 @@
 #include "Util.h"
 
 const int grow_factor = 3;
+const int frames_per_update = 2;
 
 class Game {
 private:
@@ -21,10 +22,9 @@ private:
     Direction direction;
     Direction last_move;
     bool ai_plays;
-    int frames_per_update;
+    int ai_speed;
     AI ai_player;
-    bool recording;
-    int image_number;
+    int score;
 
     void handle_input();
     void draw_world();

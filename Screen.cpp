@@ -1,10 +1,13 @@
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 #include "Screen.h"
-using std::ofstream;
-using std::ios_base;
+
+using namespace std;
 
 Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                 bool vsync, bool direct) :
+    recording(false),
     width(size_x),
     height(size_y),
     rshift(16),
@@ -32,7 +35,8 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                                               SDL_TEXTUREACCESS_STREAMING,
                                               width, height);
         int pitch;
-        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels), &pitch);
+        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels),
+                &pitch);
     } else {
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                               SDL_TEXTUREACCESS_STATIC,
@@ -64,7 +68,14 @@ Uint32 Screen::format_color(Color c) {
     return format_color(c.r, c.g, c.b);
 }
 
-void Screen::commit_screen() {
+void Screen::commit() {
+    if (recording) {
+        ostringstream convert;
+        convert << setw(z_fill) << setfill('0') << image_number;
+        string name = image_dir + "/image_" + convert.str() + ".tga";
+        write_tga(name.c_str());
+        image_number++;
+    }
     if (direct_draw) {
         SDL_UnlockTexture(texture);
     } else {
@@ -74,7 +85,8 @@ void Screen::commit_screen() {
     SDL_RenderPresent(renderer);
     if (direct_draw) {
         int pitch;
-        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels), &pitch);
+        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels),
+                &pitch);
     }
 }
 
@@ -163,12 +175,8 @@ void Screen::hor_line(int y, int x1, int x2, Uint32 c) {
         iter_i = y * width + x2;
         end_i = iter_i + (x1 - x2);
     }
-    while (true) {
+    for(; iter_i <= end_i; ++iter_i) {
         pixels[iter_i] = c;
-        if (iter_i == end_i) {
-            break;
-        }
-        iter_i++;
     }
 }
 
@@ -197,12 +205,8 @@ void Screen::ver_line(int x, int y1, int y2, Uint32 c) {
         iter_i = y2 * width + x;
         end_i = iter_i + (y1 - y2) * width;
     }
-    while (true) {
+    for(; iter_i <= end_i; iter_i += width) {
         pixels[iter_i] = c;
-        if (iter_i == end_i) {
-            break;
-        }
-        iter_i += width;
     }
 }
 
@@ -257,20 +261,13 @@ void Screen::fill_rect(int x1, int y1, int x2, int y2, Uint32 c) {
         start_x = x2;
         dx = x1 - x2;
     }
-    while (true) {
+
+    for (; iter_y <= end_y; ++iter_y) {
         int iter_x = iter_y * width + start_x;
         int end_x = iter_x + dx;
-        while (true) {
+        for (; iter_x <= end_x; ++iter_x) {
             pixels[iter_x] = c;
-            if (iter_x == end_x) {
-                break;
-            }
-            iter_x++;
         }
-        if (iter_y == end_y) {
-            break;
-        }
-        iter_y++;
     }
 }
 
@@ -403,5 +400,15 @@ void Screen::write_tga(const char * name) {
             file.put(b).put(g).put(r);
         }
     }
+}
+
+void Screen::toggle_recording() {
+    recording = !recording;
+}
+
+void Screen::set_recording_style(const char * image_dir, int z_fill) {
+    this->image_dir = string(image_dir);
+    this->z_fill = z_fill;
+    image_number = 0;
 }
 
