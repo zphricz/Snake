@@ -54,8 +54,8 @@ void Game::handle_input() {
                 if (ai_plays && ai_speed > 1) {
                     ai_speed /= 2;
                 }
-                if (last_move != RIGHT && !game_paused) {
-                    direction = LEFT;
+                if (last_move != Direction::RIGHT && !game_paused) {
+                    direction = Direction::LEFT;
                 }
                 break;
             }
@@ -63,20 +63,20 @@ void Game::handle_input() {
                 if (ai_plays && ai_speed < 1024) {
                     ai_speed *= 2;
                 }
-                if (last_move != LEFT && !game_paused) {
-                    direction = RIGHT;
+                if (last_move != Direction::LEFT && !game_paused) {
+                    direction = Direction::RIGHT;
                 }
                 break;
             }
             case SDLK_UP: {
-                if (last_move != DOWN && !game_paused) {
-                    direction = UP;
+                if (last_move != Direction::DOWN && !game_paused) {
+                    direction = Direction::UP;
                 }
                 break;
             }
             case SDLK_DOWN: {
-                if (last_move != UP && !game_paused) {
-                    direction = DOWN;
+                if (last_move != Direction::UP && !game_paused) {
+                    direction = Direction::DOWN;
                 }
                 break;
             }
@@ -155,19 +155,19 @@ void Game::step_game() {
     Coord c = snake.front();
     Coord next = c;
     switch(direction) {
-    case UP: {
+    case Direction::UP: {
         next.y--;
         break;
     }
-    case DOWN: {
+    case Direction::DOWN: {
         next.y++;
         break;
     }
-    case LEFT: {
+    case Direction::LEFT: {
         next.x--;
         break;
     }
-    case RIGHT: {
+    case Direction::RIGHT: {
         next.x++;
         break;
     }
@@ -207,8 +207,8 @@ void Game::step_game() {
 }
 
 void Game::init_game() {
-    direction = RIGHT;
-    last_move = NONE;
+    direction = Direction::RIGHT;
+    last_move = Direction::NONE;
     snake_growing = 0;
     game_paused = true;
     game_over = false;

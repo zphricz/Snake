@@ -2,47 +2,45 @@
 #define SCREEN_H
 
 #include <SDL2/SDL.h>
-
+#include <chrono>
 #include <string>
+#include "Color.h"
 
-#define CLIPPED 0
 #define likely(x)   __builtin_expect((x),1)
 #define unlikely(x) __builtin_expect((x),0)
-
-struct Color {
-    Uint8 r;
-    Uint8 g;
-    Uint8 b;
-};
 
 class Screen {
     private:
         Uint32* pixels;
         Uint32 default_color;
-        SDL_Window* window;
-        SDL_Renderer* renderer;
-        SDL_Texture* texture;
-        bool recording;
-        int image_number;
-        std::string image_dir;
-        int z_fill;
-
-        inline Uint32& pixel_at(int x, int y);
-
     public:
         const int width;
         const int height;
+        const bool clipped;
         const int rshift;
         const int gshift;
         const int bshift;
-        const bool vsynced;
         const bool direct_draw; /* Set to true for increased drawing
                                    performance. This may result in visual
                                    artifacts if drawing right after calling
                                    commit */
-
+    private:
+        SDL_Window* window;
+        SDL_Renderer* renderer;
+        SDL_Texture* texture;
+        std::chrono::high_resolution_clock::time_point last_frame_time;
+        std::chrono::high_resolution_clock::time_point current_frame_time;
+        bool recording;
+        int image_number;
+        std::string image_dir;
+        int z_fill;
+    public:
+        const bool vsynced;
+    private:
+        inline Uint32& pixel_at(int x, int y);
+    public:
         Screen(int size_x, int size_y, bool full_screen, const char * name,
-               bool vsync, bool direct = false);
+               bool vsync, bool clipped, bool direct = false);
         ~Screen();
 
         void commit();
@@ -51,6 +49,7 @@ class Screen {
         int clip_y(int y);
         Uint32 format_color(Uint8 r, Uint8 g, Uint8 b);
         Uint32 format_color(Color c);
+        void set_color(Uint32 c);
         void set_color(Uint8 r, Uint8 g, Uint8 b);
         void set_color(Color c);
         void draw_pixel(int x, int y, Uint32 c);
@@ -84,6 +83,8 @@ class Screen {
         void write_tga(const char * name);
         void toggle_recording();
         void set_recording_style(const char * image_dir, int z_fill);
+        float frame_time();
+        float fps();
 };
 
 #endif

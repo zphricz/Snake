@@ -4,17 +4,23 @@
 #include "Screen.h"
 
 using namespace std;
+using namespace chrono;
 
 Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
-                bool vsync, bool direct) :
-    recording(false),
+                bool vsync, bool clipped, bool direct) :
+    default_color(format_color(255, 255, 255)),
     width(size_x),
     height(size_y),
+    clipped(clipped),
     rshift(16),
     gshift(8),
     bshift(0),
-    vsynced(vsync),
-    direct_draw(direct) {
+    direct_draw(direct),
+    recording(false),
+    image_number(0),
+    image_dir("."),
+    z_fill(5),
+    vsynced(vsync) {
     if (full_screen) {
         window = SDL_CreateWindow(name, 0, 0, width, height,
                         SDL_WINDOW_FULLSCREEN);
@@ -24,18 +30,16 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                         width, height, 0);
     }
     if (vsync) {
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC |
-                                                  SDL_RENDERER_ACCELERATED);
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     } else {
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        renderer = SDL_CreateRenderer(window, -1, 0);
     }
-    default_color = format_color(255, 255, 255);
     if (direct_draw) {
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                               SDL_TEXTUREACCESS_STREAMING,
                                               width, height);
         int pitch;
-        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels),
+        SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels),
                 &pitch);
     } else {
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
@@ -43,6 +47,7 @@ Screen::Screen(int size_x, int size_y, bool full_screen, const char * name,
                                               width, height);
         pixels = new Uint32[width * height];
     }
+    current_frame_time = last_frame_time = high_resolution_clock::now();
 }
 
 Screen::~Screen() {
@@ -79,15 +84,17 @@ void Screen::commit() {
     if (direct_draw) {
         SDL_UnlockTexture(texture);
     } else {
-        SDL_UpdateTexture(texture, NULL, pixels, width * sizeof (Uint32));
+        SDL_UpdateTexture(texture, nullptr, pixels, width * sizeof (Uint32));
     }
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
     if (direct_draw) {
         int pitch;
-        SDL_LockTexture(texture, NULL, reinterpret_cast<void**>(&pixels),
-                &pitch);
+        SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels),
+                        &pitch);
     }
+    last_frame_time = current_frame_time;
+    current_frame_time = high_resolution_clock::now();
 }
 
 bool Screen::on_screen(int x, int y) {
@@ -106,12 +113,16 @@ int Screen::clip_x(int x) {
 
 int Screen::clip_y(int y) {
     if (unlikely(y >= height)) {
-        y = width - 1;
+        y = height - 1;
     }
     if (unlikely(y < 0)) {
         y = 0;
     }
     return y;
+}
+
+void Screen::set_color(Uint32 c) {
+    default_color = c;
 }
 
 void Screen::set_color(Uint8 r, Uint8 g, Uint8 b) {
@@ -123,11 +134,11 @@ void Screen::set_color(Color c) {
 }
 
 void Screen::draw_pixel(int x, int y, Uint32 c) {
-#if CLIPPED == 1
-    if (unlikely(!on_screen(x, y))) {
-        return;
+    if (clipped) {
+        if (unlikely(!on_screen(x, y))) {
+            return;
+        }
     }
-#endif
     pixel_at(x, y) = c;
 }
 
@@ -161,13 +172,14 @@ void Screen::fill_screen(Color c) {
 void Screen::hor_line(int y, int x1, int x2, Uint32 c) {
     int iter_i;
     int end_i;
-#if CLIPPED == 1
-    if (unlikely(y >= height || y < 0)) {
-        return;
+    if (clipped) {
+        if (unlikely(y >= height || y < 0 || (x1 >= width && x2 >= width) ||
+                     (x1 < 0 && x2 < 0))) {
+            return;
+        }
+        x1 = clip_x(x1);
+        x2 = clip_x(x2);
     }
-    x1 = clip_x(x1);
-    x2 = clip_x(x2);
-#endif
     if (x1 < x2) {
         iter_i = y * width + x1;
         end_i = iter_i + (x2 - x1);
@@ -191,19 +203,20 @@ void Screen::hor_line(int y, int x1, int x2, Color c) {
 void Screen::ver_line(int x, int y1, int y2, Uint32 c) {
     int iter_i;
     int end_i;
-#if CLIPPED == 1
-    if (unlikely(x >= width || x < 0)) {
-        return;
+    if (clipped) {
+        if (unlikely(x >= width || x < 0 || (y1 >= height && y2 >= height) ||
+                     (y1 < 0 && y2 < 0))) {
+            return;
+        }
+        y1 = clip_y(y1);
+        y2 = clip_y(y2);
     }
-    y1 = clip_y(y1);
-    y2 = clip_y(y2);
-#endif
     if (y1 < y2) {
         iter_i = y1 * width + x;
-        end_i = iter_i + (y2 - y1) * width;
+        end_i = y2 * width + x;
     } else {
         iter_i = y2 * width + x;
-        end_i = iter_i + (y1 - y2) * width;
+        end_i = y1 * width + x;
     }
     for(; iter_i <= end_i; iter_i += width) {
         pixels[iter_i] = c;
@@ -238,15 +251,17 @@ void Screen::fill_rect(int x1, int y1, int x2, int y2, Uint32 c) {
     int end_y;
     int start_x;
     int dx;
-#if CLIPPED == 1
-    if (unlikely(!on_screen(x1, y1) && !on_screen(x2, y2))) {
-        return;
+    if (clipped) {
+        if (unlikely((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0) ||
+                     (x1 >= width && x2 >= width) ||
+                     (y1 >= height && y2 >= height))) {
+            return;
+        }
+        x1 = clip_x(x1);
+        x2 = clip_x(x2);
+        y1 = clip_y(y1);
+        y2 = clip_y(y2);
     }
-    x1 = clip_x(x1);
-    x2 = clip_x(x2);
-    y1 = clip_y(y1);
-    y2 = clip_y(y2);
-#endif
     if (y1 < y2) {
         iter_y = y1;
         end_y = y2;
@@ -410,5 +425,14 @@ void Screen::set_recording_style(const char * image_dir, int z_fill) {
     this->image_dir = string(image_dir);
     this->z_fill = z_fill;
     image_number = 0;
+}
+
+float Screen::frame_time() {
+    return duration_cast<duration<float>>(current_frame_time -
+                                          last_frame_time).count();
+}
+
+float Screen::fps() {
+    return 1.0 / frame_time();
 }
 

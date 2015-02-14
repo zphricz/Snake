@@ -75,38 +75,38 @@ void AI::search_for_move(Uint32 depth) {
     Coord down{c.x, c.y + 1};
     Direction dirs[4];
     if (fruit.x > c.x) {
-        dirs[0] = RIGHT;
+        dirs[0] = Direction::RIGHT;
         if (fruit.y > c.y) {
-            dirs[1] = DOWN;
-            dirs[2] = LEFT;
-            dirs[3] = UP;
+            dirs[1] = Direction::DOWN;
+            dirs[2] = Direction::LEFT;
+            dirs[3] = Direction::UP;
         } else {
-            dirs[1] = UP;
-            dirs[2] = LEFT;
-            dirs[3] = DOWN;
+            dirs[1] = Direction::UP;
+            dirs[2] = Direction::LEFT;
+            dirs[3] = Direction::DOWN;
         }
     } else if (fruit.x < c.x) {
-        dirs[0] = LEFT;
+        dirs[0] = Direction::LEFT;
         if (fruit.y > c.y) {
-            dirs[1] = DOWN;
-            dirs[2] = RIGHT;
-            dirs[3] = UP;
+            dirs[1] = Direction::DOWN;
+            dirs[2] = Direction::RIGHT;
+            dirs[3] = Direction::UP;
         } else {
-            dirs[1] = UP;
-            dirs[2] = RIGHT;
-            dirs[3] = DOWN;
+            dirs[1] = Direction::UP;
+            dirs[2] = Direction::RIGHT;
+            dirs[3] = Direction::DOWN;
         }
     } else {
         if (fruit.y > c.y) {
-            dirs[0] = DOWN;
-            dirs[1] = RIGHT;
-            dirs[2] = LEFT;
-            dirs[3] = UP;
+            dirs[0] = Direction::DOWN;
+            dirs[1] = Direction::RIGHT;
+            dirs[2] = Direction::LEFT;
+            dirs[3] = Direction::UP;
         } else {
-            dirs[0] = UP;
-            dirs[1] = RIGHT;
-            dirs[2] = LEFT;
-            dirs[3] = DOWN;
+            dirs[0] = Direction::UP;
+            dirs[1] = Direction::RIGHT;
+            dirs[2] = Direction::LEFT;
+            dirs[3] = Direction::DOWN;
         }
     }
     Coord back = snake.back();
@@ -117,13 +117,13 @@ void AI::search_for_move(Uint32 depth) {
             break;
         }
         switch (dirs[i]) {
-        case RIGHT: {
+        case Direction::RIGHT: {
             if (!out_of_bounds(right) && !lookup_at(right)) {
                 if (grid_at(right) == MAX_SEARCH) {
                     break;
                 }
                 if (depth == 0) {
-                    first_move = RIGHT;
+                    first_move = Direction::RIGHT;
                 }
                 grid_at(right)++;
                 snake.push_front(right);
@@ -134,13 +134,13 @@ void AI::search_for_move(Uint32 depth) {
             }
             break;
         }
-        case LEFT: {
+        case Direction::LEFT: {
             if (!out_of_bounds(left) && !lookup_at(left)) {
                 if (grid_at(left) == MAX_SEARCH) {
                     break;
                 }
                 if (depth == 0) {
-                    first_move = LEFT;
+                    first_move = Direction::LEFT;
                 }
                 grid_at(left)++;
                 snake.push_front(left);
@@ -151,13 +151,13 @@ void AI::search_for_move(Uint32 depth) {
             }
             break;
         }
-        case UP: {
+        case Direction::UP: {
             if (!out_of_bounds(up) && !lookup_at(up)) {
                 if (grid_at(up) == MAX_SEARCH) {
                     break;
                 }
                 if (depth == 0) {
-                    first_move = UP;
+                    first_move = Direction::UP;
                 }
                 grid_at(up)++;
                 snake.push_front(up);
@@ -168,13 +168,13 @@ void AI::search_for_move(Uint32 depth) {
             }
             break;
         }
-        case DOWN: {
+        case Direction::DOWN: {
             if (!out_of_bounds(down) && !lookup_at(down)) {
                 if (grid_at(down) == MAX_SEARCH) {
                     break;
                 }
                 if (depth == 0) {
-                    first_move = DOWN;
+                    first_move = Direction::DOWN;
                 }
                 grid_at(down)++;
                 snake.push_front(down);
@@ -198,7 +198,7 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
     // AI fails to take into account that the snake can be growing
     // TODO: Fix this
     fruit = orig_fruit;
-    static Direction tack = NONE;
+    static Direction tack = Direction::NONE;
     snake = orig_snake;
     fill(snake_lookup.begin(), snake_lookup.end(), false);
     fill(grid.begin(), grid.end(), false);
@@ -209,10 +209,10 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
     times_up = false;
     ai_start_time = SDL_GetTicks();
     chosen_depth = 0xFFFFFFFF;
-    chosen_direction = NONE;
+    chosen_direction = Direction::NONE;
     search_for_move(0);
-    if (chosen_direction != NONE) {
-        tack = NONE;
+    if (chosen_direction != Direction::NONE) {
+        tack = Direction::NONE;
         return chosen_direction;
     } else {
         Coord back = snake.back();
@@ -225,16 +225,16 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
         Coord down{c.x, c.y + 1};
         Coord next;
         switch (last_move) {
-        case UP:
+        case Direction::UP:
             next = up;
             break;
-        case DOWN:
+        case Direction::DOWN:
             next = down;
             break;
-        case LEFT:
+        case Direction::LEFT:
             next = left;
             break;
-        case RIGHT:
+        case Direction::RIGHT:
             next = right;
             break;
         default:
@@ -261,45 +261,45 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
         //      tail is (it can follow the tail safely)
         //TODO: This currently space fills only from top to bottom, make it able
         //      to space fill in any of the four directions
-        if (tack == UP || (tack != DOWN && c.y < num_cells_y / 2)) {
-            tack = UP;
+        if (tack == Direction::UP || (tack != Direction::DOWN && c.y < num_cells_y / 2)) {
+            tack = Direction::UP;
             switch (last_move) {
-            case UP: {
+            case Direction::UP: {
                 if (num_empty_spaces_up >= num_empty_spaces_right && num_empty_spaces_up >= num_empty_spaces_left) {
-                    return UP;
+                    return Direction::UP;
                 } else if (num_empty_spaces_right >= num_empty_spaces_left) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return LEFT;
+                    return Direction::LEFT;
                 }
                 break;
             } 
-            case DOWN: {
+            case Direction::DOWN: {
                 if (num_empty_spaces_left >= num_empty_spaces_down && num_empty_spaces_left >= num_empty_spaces_right) {
-                    return LEFT;
+                    return Direction::LEFT;
                 } else if (num_empty_spaces_right >= num_empty_spaces_down) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return DOWN;
+                    return Direction::DOWN;
                 }
                 break;
             }
-            case LEFT: {
+            case Direction::LEFT: {
                 if (num_empty_spaces_up >= num_empty_spaces_left && num_empty_spaces_up >= num_empty_spaces_down) {
-                    return UP;
+                    return Direction::UP;
                 } else if (num_empty_spaces_left >= num_empty_spaces_down) {
-                    return LEFT;
+                    return Direction::LEFT;
                 } else {
-                    return DOWN;
+                    return Direction::DOWN;
                 }
             }
-            case RIGHT: {
+            case Direction::RIGHT: {
                 if (num_empty_spaces_up >= num_empty_spaces_right && num_empty_spaces_up >= num_empty_spaces_down) {
-                    return UP;
+                    return Direction::UP;
                 } else if (num_empty_spaces_right >= num_empty_spaces_down) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return DOWN;
+                    return Direction::DOWN;
                 }
             }
             default: {
@@ -308,44 +308,44 @@ Direction AI::move(Coord orig_fruit, Direction last_move, const list<Coord>& ori
             }
             }
         } else {
-            tack = DOWN;
+            tack = Direction::DOWN;
             switch (last_move) {
-            case DOWN: {
+            case Direction::DOWN: {
                 if (num_empty_spaces_down >= num_empty_spaces_right && num_empty_spaces_down >= num_empty_spaces_left) {
-                    return DOWN;
+                    return Direction::DOWN;
                 } else if (num_empty_spaces_right >= num_empty_spaces_left) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return LEFT;
+                    return Direction::LEFT;
                 }
                 break;
             } 
-            case UP: {
+            case Direction::UP: {
                 if (num_empty_spaces_left >= num_empty_spaces_up && num_empty_spaces_left >= num_empty_spaces_right) {
-                    return LEFT;
+                    return Direction::LEFT;
                 } else if (num_empty_spaces_right >= num_empty_spaces_up) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return UP;
+                    return Direction::UP;
                 }
                 break;
             }
-            case LEFT: {
+            case Direction::LEFT: {
                 if (num_empty_spaces_down >= num_empty_spaces_left && num_empty_spaces_down >= num_empty_spaces_up) {
-                    return DOWN;
+                    return Direction::DOWN;
                 } else if (num_empty_spaces_left >= num_empty_spaces_up) {
-                    return LEFT;
+                    return Direction::LEFT;
                 } else {
-                    return UP;
+                    return Direction::UP;
                 }
             }
-            case RIGHT: {
+            case Direction::RIGHT: {
                 if (num_empty_spaces_down >= num_empty_spaces_right && num_empty_spaces_down >= num_empty_spaces_up) {
-                    return DOWN;
+                    return Direction::DOWN;
                 } else if (num_empty_spaces_right >= num_empty_spaces_up) {
-                    return RIGHT;
+                    return Direction::RIGHT;
                 } else {
-                    return UP;
+                    return Direction::UP;
                 }
             }
             default: {

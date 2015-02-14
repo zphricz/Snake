@@ -12,6 +12,6 @@ struct Coord {
     }
 };
 
-typedef enum {UP, DOWN, LEFT, RIGHT, NONE} Direction;
+enum class Direction {UP, DOWN, LEFT, RIGHT, NONE};
 
 #endif
