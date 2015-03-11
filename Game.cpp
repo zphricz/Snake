@@ -7,14 +7,14 @@
 
 using namespace std;
 
-Color bg_color{25, 25, 25};
-Color grid_color{150, 150, 150};
-Color snake_color{0, 200, 0};
-Color fruit_color{200, 0, 0};
-Color dead_color{100, 0, 0};
-Color head_color{0, 0, 200};
+SDL_Color bg_color{25, 25, 25};
+SDL_Color grid_color{150, 150, 150};
+SDL_Color snake_color{0, 200, 0};
+SDL_Color fruit_color{200, 0, 0};
+SDL_Color dead_color{100, 0, 0};
+SDL_Color head_color{0, 0, 200};
 
-Game::Game(int num_x, int num_y, Screen * screen) :
+Game::Game(int num_x, int num_y, SoftScreen * screen) :
     num_cells_x(num_x),
     num_cells_y(num_y),
     scr(screen),
@@ -122,7 +122,7 @@ void Game::draw_world() {
     }
 }
 
-void Game::draw_cell(Coord cell, Color color) {
+void Game::draw_cell(Coord cell, SDL_Color color) {
     int x1, y1, x2, y2;
     x1 = cell.x * scr->width / num_cells_x + 1;
     x2 = (cell.x + 1) * scr->width / num_cells_x - 1;

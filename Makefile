@@ -8,7 +8,7 @@ DEPS = $(patsubst %.cpp, %.d, $(SRC))
 ELFNAME = snake
 
 ifeq ($(OS), Darwin)
-	CXX = g++-4.9
+	CXX = clang++
 endif
 ifeq ($(OS), Linux)
 	CXX = g++
@@ -17,7 +17,7 @@ endif
 all: $(ELFNAME)
 
 $(ELFNAME): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o$@ $^
+	$(CXX) $(CXXFLAGS) -o$@ $^ $(LDFLAGS) 
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -MMD -MP $< -o $@

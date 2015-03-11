@@ -3,22 +3,10 @@
 
 #include <SDL2/SDL.h>
 
-struct Color {
-    Uint8 r;
-    Uint8 g;
-    Uint8 b;
-    Uint8 a;
-
-    Color();
-    Color(Uint8 r, Uint8 g, Uint8 b);
-    Color(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-
-    Color operator*(float factor) const;
-    Color operator/(float factor) const;
-    Color& operator*=(float factor);
-    Color& operator/=(float factor);
-};
-
-Color blend(const Color& fg, const Color& bg);
+SDL_Color blend(const SDL_Color& fg, const SDL_Color& bg);
+SDL_Color operator*(const SDL_Color& lhs, float factor);
+SDL_Color& operator*=(SDL_Color& lhs, float factor);
+SDL_Color operator/(const SDL_Color& lhs, float factor);
+SDL_Color& operator/=(SDL_Color& lhs, float factor);
 
 #endif

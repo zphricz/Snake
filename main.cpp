@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
         full_screen = false;
     }
 
-    Screen scr(screen_width, screen_height, full_screen, "Snake", true, false);
+    SoftScreen scr(screen_width, screen_height, "Snake", full_screen, true);
     Game g(num_cells_x, num_cells_y, &scr);
     g.play();
     return 0;
