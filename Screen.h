@@ -19,18 +19,25 @@ constexpr int bshift = 0;
 /*
  * When instantiated as a hardware renderer, all draw calls must be made on the
  * same thread as the thread that instantiated the Screen. If the only draw
- * calls being made are to draw pixels, it would likely be more efficient for
+ * calls being made are to draw_pixel(), it would likely be more efficient for
  * the Screen to be instantiated as a software renderer. When instantiated as
  * a hardware renderer, all draw calls are clipped and DIRECT has no effect.
  * When instantiated as a hardware renderer, some functionality is lost (such
- * as the ability to draw out the current screen state and to record movies.
+ * as the ability to draw out the current Screen state and to record movies.
+ * Because of the differences in the way that the hardware and software
+ * Screens are handled, it is not entirely true that replacing a software
+ * Screen for a hardware one will produce the same image. To ensure that the
+ * same image is produced, you should make sure to always draw to the entire
+ * Screen.
  */
 
-// SOFT sets whether or not the Screen uses a software or hardware renderer
-// for drawing. CLIPPED sets whether or not to clip all drawing functions.
-// Setting it to true will reduce performance. Direct sets whether to draw
-// into an SDL buffer directly for the software renderer. Setting it to true
-// will increase performance, but may introduce certain graphical artifacts.
+/*
+ * SOFT sets whether or not the Screen uses a software or hardware renderer
+ * for drawing. CLIPPED sets whether or not to clip all drawing functions.
+ * Setting it to true will reduce performance. Direct sets whether to draw
+ * into an SDL buffer directly for the software renderer. Setting it to true
+ * will increase performance, but may introduce certain graphical artifacts.
+ */
 template <bool SOFT = true, bool CLIPPED = true, bool DIRECT = false>
 class Screen {
 public:
@@ -766,11 +773,9 @@ public:
     int iter_x = 0;
     int iter_y = r;
 
-    draw_pixel(x, y + r);
-    draw_pixel(x, y - r);
-    draw_pixel(x + r, y);
-    draw_pixel(x - r, y);
-
+    SDL_Point outer_points[4] = {{.x = x, .y = y + r}, {.x = x, .y = y - r},
+                                 {.x = x + r, .y = y}, {.x = x - r, .y = y}};
+    SDL_RenderDrawPoints(renderer, outer_points, 4);
     while (iter_x < iter_y) {
       if (f >= 0) {
         iter_y--;
@@ -780,14 +785,15 @@ public:
       iter_x++;
       ddF_x += 2;
       f += ddF_x + 1;
-      draw_pixel(x + iter_x, y + iter_y);
-      draw_pixel(x - iter_x, y + iter_y);
-      draw_pixel(x + iter_x, y - iter_y);
-      draw_pixel(x - iter_x, y - iter_y);
-      draw_pixel(x + iter_y, y + iter_x);
-      draw_pixel(x - iter_y, y + iter_x);
-      draw_pixel(x + iter_y, y - iter_x);
-      draw_pixel(x - iter_y, y - iter_x);
+      SDL_Point inner_points[8] = {{.x = x + iter_x, .y = y + iter_y},
+                                   {.x = x - iter_x, .y = y + iter_y},
+                                   {.x = x + iter_x, .y = y - iter_y},
+                                   {.x = x - iter_x, .y = y - iter_y},
+                                   {.x = x + iter_y, .y = y + iter_x},
+                                   {.x = x - iter_y, .y = y + iter_x},
+                                   {.x = x + iter_y, .y = y - iter_x},
+                                   {.x = x - iter_y, .y = y - iter_x}};
+      SDL_RenderDrawPoints(renderer, inner_points, 8);
     }
   }
 
@@ -804,10 +810,9 @@ public:
     int iter_x = 0;
     int iter_y = r;
 
-    draw_pixel(x, y + r);
-    draw_pixel(x, y - r);
+    SDL_Point points[2] = {{.x = x, .y = y + r}, {.x = x, .y = y - r}};
+    SDL_RenderDrawPoints(renderer, points, 2);
     hor_line(y, x - r, x + r);
-
     while (iter_x < iter_y) {
       if (f >= 0) {
         iter_y--;
