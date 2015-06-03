@@ -1,12 +1,14 @@
+ELFNAME = snake
+SUBMODULES = Screen
+OBJDIR = objs
 CXXFLAGS = -std=c++11 -Ofast -Wall -Werror
 LDFLAGS = -lSDL2
 OS = $(shell uname -s)
 SRC = $(wildcard *.cpp)
-HEADERS = $(wildcard *.cpp)
+HEADERS = $(wildcard *.h)
 OBJECTS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(SRC))
 DEPS = $(patsubst %.cpp, $(OBJDIR)/%.d, $(SRC))
-OBJDIR = objs
-ELFNAME = snake
+CXXFLAGS += $(foreach SUBMOD, $(SUBMODULES), -I $(SUBMOD))
 
 ifeq ($(OS), Darwin)
 	CXX = clang++
@@ -24,7 +26,7 @@ $(OBJDIR)/%.o: %.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c -MMD -MP $< -o $@
 
 $(OBJDIR):
-	    mkdir -p $(OBJDIR)
+	mkdir -p $(OBJDIR)
 
 -include $(DEPS)
 

@@ -1,0 +1,14 @@
+This project requires SDL2 to be installed.
+
+To build, you must first initialize the submodules.  To do that, run the
+following commands:
+
+    git submodule init
+    git submodule update
+
+Instead, you can directly clone this project and the submodules at the same time
+with this command:
+
+    git clone --recursive URL_FOR_THIS_PROJECT
+
+Then simply run make, and an executable should be produced.
