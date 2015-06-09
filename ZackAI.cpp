@@ -1,25 +1,26 @@
 #include <iostream>
 #include <algorithm>
-#include "AI.h"
+#include "ZackAI.h"
 
 using namespace std;
 
-AI::AI(int num_x, int num_y) : num_cells_x(num_x), num_cells_y(num_y) {
+ZackAI::ZackAI(int num_x, int num_y) : 
+  num_cells_x(num_x), num_cells_y(num_y) {
   grid.resize(num_cells_x * num_cells_y);
   snake_lookup.resize(num_cells_x * num_cells_y);
 }
 
-AI::~AI() {}
+ZackAI::~ZackAI() {}
 
-Uint8 &AI::lookup_at(Coord c) { return snake_lookup[c.y * num_cells_x + c.x]; }
+Uint8 &ZackAI::lookup_at(Coord c) { return snake_lookup[c.y * num_cells_x + c.x]; }
 
-Uint8 &AI::grid_at(Coord c) { return grid[c.y * num_cells_x + c.x]; }
+Uint8 &ZackAI::grid_at(Coord c) { return grid[c.y * num_cells_x + c.x]; }
 
-bool AI::out_of_bounds(Coord c) {
+bool ZackAI::out_of_bounds(Coord c) {
   return (c.x >= num_cells_x) || (c.x < 0) || (c.y >= num_cells_y) || (c.y < 0);
 }
 
-int AI::num_empty_spaces(Coord c) {
+int ZackAI::num_empty_spaces(Coord c) {
   int size = 0;
   copy(snake_lookup.begin(), snake_lookup.end(), grid.begin());
   vector<Coord> v;
@@ -49,7 +50,7 @@ int AI::num_empty_spaces(Coord c) {
   return size;
 }
 
-void AI::search_for_move(Uint32 depth) {
+void ZackAI::search_for_move(Uint32 depth) {
   // TODO: The snake will always attempt to get a fruit, even it it assures
   //       that the snake dies. Fix this
   Coord c = snake.front();
@@ -185,8 +186,9 @@ void AI::search_for_move(Uint32 depth) {
   lookup_at(back) = true;
 }
 
-Direction AI::move(Coord orig_fruit, Direction last_move,
-                   const list<Coord> &orig_snake) {
+Direction ZackAI::move(Coord orig_fruit, Direction last_move,
+                   const list<Coord> &orig_snake,
+                   int snake_growing) {
   // AI fails to take into account that the snake can be growing
   // TODO: Fix this
   fruit = orig_fruit;

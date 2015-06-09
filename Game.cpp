@@ -4,6 +4,7 @@
 #include <string>
 #include <iomanip>
 #include "Game.h"
+#include "ZackAI.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ SDL_Color head_color{0, 0, 200};
 
 Game::Game(int num_x, int num_y, SoftScreen *screen)
     : num_cells_x(num_x), num_cells_y(num_y), scr(screen), game_running(true),
-      ai_plays(false), ai_speed(1), ai_player(num_x, num_y) {
+      ai_plays(false), ai_speed(1) {
   if (num_cells_x < 4 || num_cells_y < 4) {
     cout << "ERROR: Too few cells to play with" << endl;
     exit(1);
@@ -26,9 +27,12 @@ Game::Game(int num_x, int num_y, SoftScreen *screen)
     exit(1);
   }
   scr->set_recording_style("images", 5);
+  ai_player = new ZackAI(num_cells_x, num_cells_y);
 }
 
-Game::~Game() {}
+Game::~Game() {
+  delete ai_player;
+}
 
 void Game::handle_input() {
   SDL_Event event;
@@ -192,6 +196,12 @@ void Game::step_game() {
   }
   snake.push_front(next);
   if (next == fruit) {
+    if (snake.size() == num_cells_x * num_cells_y) {
+      cout << "Game Over" << endl;
+      game_over = true;
+      game_paused = true;
+      return;
+    }
     place_new_fruit();
     score++;
     cout << "Score: " << score << endl;
@@ -222,7 +232,7 @@ void Game::play() {
     if (!game_paused) {
       if (ai_plays) {
         for (int j = 0; j < ai_speed; ++j) {
-          direction = ai_player.move(fruit, last_move, snake);
+          direction = ai_player->move(fruit, last_move, snake, snake_growing);
           step_game();
           if (game_over) {
             break;

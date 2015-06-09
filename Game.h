@@ -23,7 +23,7 @@ private:
   Direction last_move;
   bool ai_plays;
   int ai_speed;
-  AI ai_player;
+  AI* ai_player;
   int score;
 
   void handle_input();
