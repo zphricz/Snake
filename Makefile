@@ -1,7 +1,7 @@
 ELFNAME = snake
 SUBMODULES = Screen
 OBJDIR = objs
-CXXFLAGS = -std=c++11 -Ofast -Wall -Werror
+CXXFLAGS = -std=c++14 -Ofast -Wall -Werror
 LDFLAGS = -lSDL2
 OS = $(shell uname -s)
 SRC = $(wildcard *.cpp)

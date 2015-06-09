@@ -2,8 +2,6 @@
 #include <algorithm>
 #include "ZackAI.h"
 
-using namespace std;
-
 ZackAI::ZackAI(int num_x, int num_y) : 
   num_cells_x(num_x), num_cells_y(num_y) {
   grid.resize(num_cells_x * num_cells_y);
@@ -23,7 +21,7 @@ bool ZackAI::out_of_bounds(Coord c) {
 int ZackAI::num_empty_spaces(Coord c) {
   int size = 0;
   copy(snake_lookup.begin(), snake_lookup.end(), grid.begin());
-  vector<Coord> v;
+  std::vector<Coord> v;
   v.push_back(c);
   while (!v.empty()) {
     Coord new_c = v.back();
@@ -187,7 +185,7 @@ void ZackAI::search_for_move(Uint32 depth) {
 }
 
 Direction ZackAI::move(Coord orig_fruit, Direction last_move,
-                   const list<Coord> &orig_snake,
+                   const std::list<Coord> &orig_snake,
                    int snake_growing) {
   // AI fails to take into account that the snake can be growing
   // TODO: Fix this

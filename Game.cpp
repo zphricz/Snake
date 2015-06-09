@@ -6,8 +6,6 @@
 #include "Game.h"
 #include "ZackAI.h"
 
-using namespace std;
-
 SDL_Color bg_color{25, 25, 25};
 SDL_Color grid_color{150, 150, 150};
 SDL_Color snake_color{0, 200, 0};
@@ -19,19 +17,17 @@ Game::Game(int num_x, int num_y, SoftScreen *screen)
     : num_cells_x(num_x), num_cells_y(num_y), scr(screen), game_running(true),
       ai_plays(false), ai_speed(1) {
   if (num_cells_x < 4 || num_cells_y < 4) {
-    cout << "ERROR: Too few cells to play with" << endl;
+    std::cout << "ERROR: Too few cells to play with" << std::endl;
     exit(1);
   }
   if (num_cells_x > scr->width / 2 || num_cells_y > scr->height / 2) {
-    cout << "ERROR: Too many cells to display on this screen" << endl;
+    std::cout << "ERROR: Too many cells to display on this screen" << std::endl;
     exit(1);
   }
   scr->set_recording_style("images", 5);
-  ai_player = new ZackAI(num_cells_x, num_cells_y);
 }
 
 Game::~Game() {
-  delete ai_player;
 }
 
 void Game::handle_input() {
@@ -189,7 +185,7 @@ void Game::step_game() {
     snake_growing--;
   }
   if (collides_with_snake(next) || out_of_bounds(next)) {
-    cout << "Game Over" << endl;
+    std::cout << "Game Over" << std::endl;
     game_over = true;
     game_paused = true;
     return;
@@ -197,18 +193,19 @@ void Game::step_game() {
   snake.push_front(next);
   if (next == fruit) {
     if (snake.size() == num_cells_x * num_cells_y) {
-      cout << "Game Over" << endl;
+      std::cout << "Game Over" << std::endl;
       game_over = true;
       game_paused = true;
       return;
     }
     place_new_fruit();
     score++;
-    cout << "Score: " << score << endl;
+    std::cout << "Score: " << score << std::endl;
   }
 }
 
 void Game::init_game() {
+  ai_player = std::make_unique<ZackAI>(num_cells_x, num_cells_y);
   direction = Direction::RIGHT;
   last_move = Direction::NONE;
   snake_growing = 0;
@@ -220,7 +217,7 @@ void Game::init_game() {
   snake.push_back({num_cells_x / 2 - 1, num_cells_y / 2});
   snake.push_back({num_cells_x / 2 - 2, num_cells_y / 2});
   place_new_fruit();
-  cout << "Game Start" << endl;
+  std::cout << "Game Start" << std::endl;
 }
 
 // Runs the game loop
