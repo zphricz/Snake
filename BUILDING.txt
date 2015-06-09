@@ -12,3 +12,8 @@ with this command:
     git clone --recursive URL_FOR_THIS_PROJECT
 
 Then simply run make, and an executable should be produced.
+
+To update to the latest version of the submodules in this project, run this
+command:
+
+    git submodule foreach git pull
