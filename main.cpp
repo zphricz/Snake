@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
   }
   SDL_GetCurrentDisplayMode(0, &display);
   atexit(SDL_Quit);
-  srand(time(NULL));
 
   int screen_width = display.w;
   int screen_height = display.h;

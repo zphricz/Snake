@@ -1,6 +1,8 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <deque>
+#include <memory>
 #include "Screen.h"
 #include "AI.h"
 #include "Util.h"
@@ -18,7 +20,7 @@ private:
   bool game_over;
   int snake_growing;
   Coord fruit;
-  std::list<Coord> snake;
+  std::deque<Coord> snake;
   Direction direction;
   Direction last_move;
   bool ai_plays;

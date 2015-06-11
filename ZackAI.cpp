@@ -6,6 +6,7 @@ ZackAI::ZackAI(int num_x, int num_y) :
   num_cells_x(num_x), num_cells_y(num_y) {
   grid.resize(num_cells_x * num_cells_y);
   snake_lookup.resize(num_cells_x * num_cells_y);
+  tack = Direction::NONE;
 }
 
 ZackAI::~ZackAI() {}
@@ -51,8 +52,8 @@ int ZackAI::num_empty_spaces(Coord c) {
 void ZackAI::search_for_move(Uint32 depth) {
   // TODO: The snake will always attempt to get a fruit, even it it assures
   //       that the snake dies. Fix this
-  Coord c = snake.front();
-  if (c == fruit) {
+  Coord c = ai_snake.front();
+  if (c == ai_fruit) {
     chosen_direction = first_move;
     chosen_depth = depth;
     return;
@@ -66,9 +67,9 @@ void ZackAI::search_for_move(Uint32 depth) {
   Coord up{c.x, c.y - 1};
   Coord down{c.x, c.y + 1};
   Direction dirs[4];
-  if (fruit.x > c.x) {
+  if (ai_fruit.x > c.x) {
     dirs[0] = Direction::RIGHT;
-    if (fruit.y > c.y) {
+    if (ai_fruit.y > c.y) {
       dirs[1] = Direction::DOWN;
       dirs[2] = Direction::LEFT;
       dirs[3] = Direction::UP;
@@ -77,9 +78,9 @@ void ZackAI::search_for_move(Uint32 depth) {
       dirs[2] = Direction::LEFT;
       dirs[3] = Direction::DOWN;
     }
-  } else if (fruit.x < c.x) {
+  } else if (ai_fruit.x < c.x) {
     dirs[0] = Direction::LEFT;
-    if (fruit.y > c.y) {
+    if (ai_fruit.y > c.y) {
       dirs[1] = Direction::DOWN;
       dirs[2] = Direction::RIGHT;
       dirs[3] = Direction::UP;
@@ -89,7 +90,7 @@ void ZackAI::search_for_move(Uint32 depth) {
       dirs[3] = Direction::DOWN;
     }
   } else {
-    if (fruit.y > c.y) {
+    if (ai_fruit.y > c.y) {
       dirs[0] = Direction::DOWN;
       dirs[1] = Direction::RIGHT;
       dirs[2] = Direction::LEFT;
@@ -101,8 +102,8 @@ void ZackAI::search_for_move(Uint32 depth) {
       dirs[3] = Direction::DOWN;
     }
   }
-  Coord back = snake.back();
-  snake.pop_back();
+  Coord back = ai_snake.back();
+  ai_snake.pop_back();
   lookup_at(back) = false;
   for (int i = 0; i < 4; ++i) {
     if (times_up || depth + 1 >= chosen_depth) {
@@ -118,10 +119,10 @@ void ZackAI::search_for_move(Uint32 depth) {
           first_move = Direction::RIGHT;
         }
         grid_at(right)++;
-        snake.push_front(right);
+        ai_snake.push_front(right);
         lookup_at(right) = true;
         search_for_move(depth + 1);
-        snake.pop_front();
+        ai_snake.pop_front();
         lookup_at(right) = false;
       }
       break;
@@ -135,10 +136,10 @@ void ZackAI::search_for_move(Uint32 depth) {
           first_move = Direction::LEFT;
         }
         grid_at(left)++;
-        snake.push_front(left);
+        ai_snake.push_front(left);
         lookup_at(left) = true;
         search_for_move(depth + 1);
-        snake.pop_front();
+        ai_snake.pop_front();
         lookup_at(left) = false;
       }
       break;
@@ -152,10 +153,10 @@ void ZackAI::search_for_move(Uint32 depth) {
           first_move = Direction::UP;
         }
         grid_at(up)++;
-        snake.push_front(up);
+        ai_snake.push_front(up);
         lookup_at(up) = true;
         search_for_move(depth + 1);
-        snake.pop_front();
+        ai_snake.pop_front();
         lookup_at(up) = false;
       }
       break;
@@ -169,10 +170,10 @@ void ZackAI::search_for_move(Uint32 depth) {
           first_move = Direction::DOWN;
         }
         grid_at(down)++;
-        snake.push_front(down);
+        ai_snake.push_front(down);
         lookup_at(down) = true;
         search_for_move(depth + 1);
-        snake.pop_front();
+        ai_snake.pop_front();
         lookup_at(down) = false;
       }
       break;
@@ -180,21 +181,20 @@ void ZackAI::search_for_move(Uint32 depth) {
     default: { break; }
     }
   }
-  snake.push_back(back);
+  ai_snake.push_back(back);
   lookup_at(back) = true;
 }
 
-Direction ZackAI::move(Coord orig_fruit, Direction last_move,
-                   const std::list<Coord> &orig_snake,
+Direction ZackAI::move(Coord game_fruit, Direction last_move,
+                   const std::deque<Coord> &game_snake,
                    int snake_growing) {
   // AI fails to take into account that the snake can be growing
   // TODO: Fix this
-  fruit = orig_fruit;
-  static Direction tack = Direction::NONE;
-  snake = orig_snake;
+  ai_fruit = game_fruit;
+  ai_snake = game_snake;
   fill(snake_lookup.begin(), snake_lookup.end(), false);
   fill(grid.begin(), grid.end(), false);
-  for (auto &part : snake) {
+  for (auto &part : ai_snake) {
     lookup_at(part) = true;
     grid_at(part) = true;
   }
@@ -207,10 +207,10 @@ Direction ZackAI::move(Coord orig_fruit, Direction last_move,
     tack = Direction::NONE;
     return chosen_direction;
   } else {
-    Coord back = snake.back();
-    snake.pop_back();
+    Coord back = ai_snake.back();
+    ai_snake.pop_back();
     lookup_at(back) = false;
-    Coord c = snake.front();
+    Coord c = ai_snake.front();
     Coord right{c.x + 1, c.y};
     Coord left{c.x - 1, c.y};
     Coord up{c.x, c.y - 1};

@@ -1,1 +1,2 @@
-- Look at TODO's inside of AI.cpp
+- Look at TODO's inside of ZackAI.cpp
+- Make place_new_fruit no longer run in potentially indefinite time

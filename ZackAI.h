@@ -12,14 +12,15 @@ class ZackAI : public AI {
 private:
   std::vector<Uint8> grid;
   std::vector<Uint8> snake_lookup;
-  std::list<Coord> snake;
-  Coord fruit;
+  std::deque<Coord> ai_snake;
+  Coord ai_fruit;
   bool times_up;
   int num_cells_x;
   int num_cells_y;
   Uint32 ai_start_time;
   Direction chosen_direction;
   Direction first_move;
+  Direction tack;
   Uint32 chosen_depth;
 
   Uint8 &lookup_at(Coord c);
@@ -31,8 +32,8 @@ private:
 public:
   ZackAI(int num_x, int num_y);
   ~ZackAI() override;
-  Direction move(Coord orig_fruit, Direction last_move,
-                 const std::list<Coord> &orig_snake,
+  Direction move(Coord game_fruit, Direction last_move,
+                 const std::deque<Coord> &game_snake,
                  int snake_growing) override;
 };
 

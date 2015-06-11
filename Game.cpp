@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <random>
 #include "Game.h"
 #include "ZackAI.h"
 
@@ -12,6 +13,13 @@ SDL_Color snake_color{0, 200, 0};
 SDL_Color fruit_color{200, 0, 0};
 SDL_Color dead_color{100, 0, 0};
 SDL_Color head_color{0, 0, 200};
+
+static int rand_int(int range_start, int range_end) {
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dis(range_start, range_end);
+  return dis(gen);
+}
 
 Game::Game(int num_x, int num_y, SoftScreen *screen)
     : num_cells_x(num_x), num_cells_y(num_y), scr(screen), game_running(true),
@@ -148,8 +156,8 @@ bool Game::out_of_bounds(Coord c) {
 
 void Game::place_new_fruit() {
   do {
-    fruit.x = rand() % num_cells_x;
-    fruit.y = rand() % num_cells_y;
+    fruit.x = rand_int(0, num_cells_x - 1);
+    fruit.y = rand_int(0, num_cells_y - 1);
   } while (collides_with_snake(fruit));
 }
 
@@ -192,6 +200,8 @@ void Game::step_game() {
   }
   snake.push_front(next);
   if (next == fruit) {
+    score++;
+    std::cout << "Score: " << score << std::endl;
     if (snake.size() == num_cells_x * num_cells_y) {
       std::cout << "Game Over" << std::endl;
       game_over = true;
@@ -199,8 +209,6 @@ void Game::step_game() {
       return;
     }
     place_new_fruit();
-    score++;
-    std::cout << "Score: " << score << std::endl;
   }
 }
 
