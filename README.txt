@@ -12,7 +12,7 @@ not a whole lot more to say. It requires SDL2 to run. Run it with:
 To specify the number of cells in the game and the resolution to render it by,
 run it with:
 
-    ./life [Board_x Board_y] [Screen_x Screen_y]
+    ./snake [Board_x Board_y] [Screen_x Screen_y]
 
 Use the arrow keys to move the snake. Press space or enter to pause and start
 the game.  To close the program, press the escape key.
