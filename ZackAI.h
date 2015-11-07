@@ -9,32 +9,32 @@ const Uint32 ai_turn_time = 10; // milliseconds
 const Uint8 MAX_SEARCH = 1;
 
 class ZackAI : public AI {
-private:
-  std::vector<Uint8> grid;
-  std::vector<Uint8> snake_lookup;
-  std::deque<Coord> ai_snake;
-  Coord ai_fruit;
-  bool times_up;
-  int num_cells_x;
-  int num_cells_y;
-  Uint32 ai_start_time;
-  Direction chosen_direction;
-  Direction first_move;
-  Direction tack;
-  Uint32 chosen_depth;
+  private:
+    std::vector<Uint8> grid;
+    std::vector<Uint8> snake_lookup;
+    std::deque<Coord> ai_snake;
+    Coord ai_fruit;
+    bool times_up;
+    int num_cells_x;
+    int num_cells_y;
+    Uint32 ai_start_time;
+    Direction chosen_direction;
+    Direction first_move;
+    Direction tack;
+    Uint32 chosen_depth;
 
-  Uint8 &lookup_at(Coord c);
-  Uint8 &grid_at(Coord c);
-  int num_empty_spaces(Coord c);
-  void search_for_move(Uint32 depth);
-  bool out_of_bounds(Coord c);
+    Uint8 &lookup_at(Coord c);
+    Uint8 &grid_at(Coord c);
+    int num_empty_spaces(Coord c);
+    void search_for_move(Uint32 depth);
+    bool out_of_bounds(Coord c);
 
-public:
-  ZackAI(int num_x, int num_y);
-  ~ZackAI() override;
-  Direction move(Coord game_fruit, Direction last_move,
-                 const std::deque<Coord> &game_snake,
-                 int snake_growing) override;
+  public:
+    ZackAI(int num_x, int num_y);
+    ~ZackAI() override;
+    Direction move(Coord game_fruit, Direction last_move,
+                   const std::deque<Coord> &game_snake,
+                   int snake_growing) override;
 };
 
 #endif
